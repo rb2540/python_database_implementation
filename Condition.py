@@ -1,5 +1,3 @@
-from enum import Enum
-
 relmap = {'!=':lambda a,b : a!=b,
           '>=':lambda a,b : a>=b,
           '<=':lambda a,b : a<=b,
@@ -18,20 +16,43 @@ arithops = arithmap.keys()
 
 class TypedFunction :
     """
-    Function that has kind and val atrributes
+    Function that has kind and val atrributes, and outputs its description
     """
-    def __init__(self, f, kind, val) :
+    def __init__(self, f, kind, val, s) :
         self.f = f
         self.kind = kind
         self.val = val
+        self.s = s
 
     def __call__(self,*args,**kwargs) :
-        return self.f(*args,**kwargs)
+        v = self.f(*args,**kwargs)
+        return v
     def __str__(self) :
-        return f'TypedFunction({self.kind},{self.val})'
+        return f'TypedFunction({self.kind},{self.val},{self.s})'
     def __repr__(self) :
         return str(self)
 
+class CmpFun :
+    """
+    Comparison function that can output its description
+    """
+    def __init__(self, rel, a, b) :
+        self.rel = rel
+        self.a = a
+        self.b = b
+        self.rel_fun = relmap[rel]
+    def __call__(self,i,j) :
+        av = self.a(i,j)
+        bv = self.b(i,j)
+        v = self.rel_fun(av,bv)
+        #print(str(self),'cmping',av,self.rel,bv,'giving',v)
+        return v        
+    def __str__(self) :
+        return f'CmpFun({self.rel},{self.a},{self.b})'
+    def __repr__(self) :
+        return str(self)
+    
+    
 def get_col(s,tables,names) :
     """
     Given a field name, a list of tables, and their names,
@@ -65,19 +86,19 @@ def get_getter(s,tables,names) :
     """
     if not s[0].isalpha() :
         v = float(s)
-        return TypedFunction(lambda i,j : v,0,v)
+        return TypedFunction(lambda i,j : v,0,v,s)
 
     op_idxs = [s.find(a) for a in arithops if s.find(a)>-1]
     if len(op_idxs) == 0 :
         col,table_idx = get_col(s,tables,names)
-        return TypedFunction(lambda i,j : col[ [i,j][table_idx] ],1,s)
+        return TypedFunction(lambda i,j : col[ [i,j][table_idx] ],1,s,s)
     op_idx = min(op_idxs)
     op_fun = arithmap[s[op_idx]]
     a_str = s[0:op_idx].strip()
     b_str = s[op_idx+1:].strip()
     v = float(b_str)
     col,table_idx = get_col(a_str,tables,names)
-    return TypedFunction(lambda i,j : op_fun(col[ [i,j][table_idx] ],v),2,v)
+    return TypedFunction(lambda i,j : op_fun(col[ [i,j][table_idx] ],v),2,v,s)
 
 class Condition :
     """
@@ -91,6 +112,15 @@ class Condition :
         """
         self.s = s
         self.prepare(tables,names)
+
+    def __str__(self) :
+        s = f"{'And' if self.isAnd else 'Or'}"
+        for f in self.funs :
+            if len(s) > 0 : s += ", "
+            s += f'({f})'
+        return s
+
+    def __repr__(self) : return str(self)
         
     def prepare(self,tables,names) :
         """
@@ -116,10 +146,9 @@ class Condition :
                     rel = r
                     ptoks = [t.strip() for t in p.split(r)]
                     break
-            cmp_fun = relmap[rel]
             a = get_getter(ptoks[0],tables,names)
             b = get_getter(ptoks[1],tables,names)
-            f = lambda i,j : cmp_fun(a(i,j),b(i,j))
+            f = CmpFun(rel,a,b)
             self.funs.append(f)
             self.info.append( (rel,a,b) )
 

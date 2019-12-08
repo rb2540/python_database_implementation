@@ -5,7 +5,18 @@ def format_data(s) :
         return int(s)
     except ValueError :
         return s
-        
+
+def format_str(s) :
+    try :
+        v = int(s)
+        return str(s)
+    except ValueError :
+        pass
+    try :
+        v = float(s)
+        return f'{v:0.4f}'
+    except ValueError :
+        return str(s)
 class Table :
     def __init__(self, filename=None) :
         """
@@ -17,6 +28,16 @@ class Table :
         if filename is not None :
             self.load(filename)
 
+    def __str__(self) :
+        s = '|'.join(self.names)+'\n'
+        for i in range(len(self)) :
+            d = [str(self.columns[j][i]) for j in range(len(self.columns))]
+            s += '|'.join(d)+'\n'
+        return s
+
+    def __repr__(self) : return str(self)
+        
+            
     @classmethod
     def create_table(cls, names) :
         """
@@ -69,9 +90,9 @@ class Table :
         filename - filename of file to write data to
         """
         with open(filename,'w') as f :
-            #f.write('|'.join(self.names)+'\n') #do not write out column names
+            f.write('|'.join(self.names)+'\n') #do not write out column names
             for i in range(len(self)) :
-                d = [str(self.columns[j][i]) for j in range(len(self.columns))]
+                d = [format_str(self.columns[j][i]) for j in range(len(self.columns))]
                 f.write('|'.join(d)+'\n')
                 
     def __len__(self) :
