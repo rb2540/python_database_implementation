@@ -1,3 +1,4 @@
+R_saleid|R_itemid|R_customerid|R_storeid|R_time|R_qty|R_pricerange|S_saleid|S_I|S_C|S_S|S_T|S_Q|S_P
 784|90|182|97|46|31|moderate|72368|10685|182|27|73|11|cheap
 784|90|182|97|46|31|moderate|74395|12924|182|36|73|49|moderate
 784|90|182|97|46|31|moderate|87228|10023|182|5|73|42|expensive
