@@ -1,12 +1,30 @@
 from BTrees.OOBTree import OOBTree
 
 def format_data(s) :
+    """
+    Converts input string to data type.
+    Input:
+    s - data
+    Output:
+    converted data
+    """
     try :
         return int(s)
+    except ValueError :
+        pass
+    try :
+        return float(s)
     except ValueError :
         return s
 
 def format_str(s) :
+    """
+    Formats given string for output so that floats have 4 digits.
+    Input:
+    s - data to be formatted
+    Output:
+    formatted data
+    """
     try :
         v = int(s)
         return str(s)
@@ -17,6 +35,7 @@ def format_str(s) :
         return f'{v:0.4f}'
     except ValueError :
         return str(s)
+
 class Table :
     def __init__(self, filename=None) :
         """
@@ -72,6 +91,7 @@ class Table :
         Input:
         filename - filename of a file containing the |-delimited data
         """
+        if not filename.endswith('.txt'): filename += '.txt'
         with open(filename) as f :
             lines = f.readlines()
         self.names = [s.strip() for s in lines[0].split('|')]
@@ -89,6 +109,7 @@ class Table :
         Input:
         filename - filename of file to write data to
         """
+        if not filename.endswith('.txt'): filename += '.txt'
         with open(filename,'w') as f :
             f.write('|'.join(self.names)+'\n') #do not write out column names
             for i in range(len(self)) :
@@ -181,12 +202,14 @@ class Table :
         idx_info = condition.get_join_index()
         if idx_info is not None :
             colA = self.namemap[idx_info[0]]
-            idx = T.indexes[idx_info[1]]            
+            idx = T.indexes[idx_info[1]]
+        cnt = 0
         for i in range(len(self)) :
             L = range(len(T))
             if idx_info is not None : L = idx.get(colA[i],[])
             for j in L :
                 if condition(i,j) :
+                    cnt+=1
                     vdict = {p1+'_'+n:c[i] for n,c in self.namemap.items()}
                     vdict.update({p2+'_'+n:c[j] for n,c in T.namemap.items()})
                     res.add_row(vdict)
@@ -218,13 +241,13 @@ class Table :
         new sorted table
         """
         res = Table.create_table(self.names)
-        if len(res) == 0 : return res
+        if len(self) == 0 : return res
         for i in range(len(self)) :
-            res.add_row(self.get_row(i))            
-        for n in col_names[::-1] :
-            argsort = sorted(range(len(res)),key=res.namemap[n].__getitem__)
-            for i in range(len(res.columns)) :
-                res.columns[i] = [res.columns[i][j] for j in argsort]
+            res.add_row(self.get_row(i))
+        cols = [res.namemap[n] for n in col_names]
+        argsort = sorted(range(len(res)),key=lambda i : tuple(col[i] for col in cols))
+        for i in range(len(res.columns)) :
+            res.columns[i] = [res.columns[i][j] for j in argsort]
         return res
 
     def sumgroup(self,opcol_name,groupcol_names) :

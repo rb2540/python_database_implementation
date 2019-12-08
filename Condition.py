@@ -18,17 +18,18 @@ class TypedFunction :
     """
     Function that has kind and val atrributes, and outputs its description
     """
-    def __init__(self, f, kind, val, s) :
+    def __init__(self, f, kind, val, s, tbl_idx=None) :
         self.f = f
         self.kind = kind
         self.val = val
         self.s = s
+        self.tbl_idx = tbl_idx
 
     def __call__(self,*args,**kwargs) :
         v = self.f(*args,**kwargs)
         return v
     def __str__(self) :
-        return f'TypedFunction({self.kind},{self.val},{self.s})'
+        return f'TypedFunction(kind={self.kind},val={self.val},str={self.s},tbl_idx={self.tbl_idx})'
     def __repr__(self) :
         return str(self)
 
@@ -91,14 +92,14 @@ def get_getter(s,tables,names) :
     op_idxs = [s.find(a) for a in arithops if s.find(a)>-1]
     if len(op_idxs) == 0 :
         col,table_idx = get_col(s,tables,names)
-        return TypedFunction(lambda i,j : col[ [i,j][table_idx] ],1,s,s)
+        return TypedFunction(lambda i,j : col[ [i,j][table_idx] ],1,s,s,table_idx)
     op_idx = min(op_idxs)
     op_fun = arithmap[s[op_idx]]
     a_str = s[0:op_idx].strip()
     b_str = s[op_idx+1:].strip()
     v = float(b_str)
     col,table_idx = get_col(a_str,tables,names)
-    return TypedFunction(lambda i,j : op_fun(col[ [i,j][table_idx] ],v),2,v,s)
+    return TypedFunction(lambda i,j : op_fun(col[ [i,j][table_idx] ],v),2,v,s,table_idx)
 
 class Condition :
     """
